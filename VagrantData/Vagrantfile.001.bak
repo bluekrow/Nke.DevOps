@@ -1,0 +1,43 @@
+$docker = <<SCRIPT
+apt-get -y update
+apt-get -y install curl apt-transport-https
+curl -s https://get.docker.com | bash
+usermod -aG docker vagrant
+SCRIPT
+
+$swarminit = <<SCRIPT
+docker swarm init --advertise-addr 10.0.7.11
+docker swarm join-token manager | grep swarm | tail -1 > /vagrant/jointoken.txt
+SCRIPT
+
+$swarmjoin = <<SCRIPT
+bash /vagrant/jointoken.txt
+SCRIPT
+
+Vagrant.configure(2) do |config|
+  config.vm.define "swarm1" do |config|
+    config.vm.box = "debian/stretch64"
+    config.vm.hostname = "swarm1"
+    config.vm.network "private_network", ip: "10.0.7.11"
+    config.vm.provision "shell", inline: $docker
+    config.vm.provision "shell", inline: $swarminit
+#    config.vm.synced_folder ".", "/vagrant", disabled: true
+  end
+
+  config.vm.define "swarm2" do |config|
+    config.vm.box = "debian/stretch64"
+    config.vm.hostname = "swarm2"
+    config.vm.network "private_network", ip: "10.0.7.12"
+    config.vm.provision "shell", inline: $docker
+    config.vm.provision "shell", inline: $swarmjoin
+#    config.vm.synced_folder ".", "/vagrant", disabled: true
+  end
+
+  config.vm.define "swarm3" do |config|
+    config.vm.box = "debian/stretch64"
+    config.vm.hostname = "swarm3"
+    config.vm.network "private_network", ip: "10.0.7.13"
+    config.vm.provision "shell", inline: $docker
+    config.vm.provision "shell", inline: $swarmjoin
+#    config.vm.synced_folder ".", "/vagrant", disabled: true
+  end

@@ -1,0 +1,40 @@
+version: '3.5'
+
+services:
+  traefik:
+    image: library/traefik:1.7
+    command: 
+      - "--api"
+      - "--entrypoints=Name:http Address::80"
+      - "--defaultentrypoints=http"
+      - "--docker"
+      - "--docker.swarmmode"
+      - "--docker.domain=example.com"
+      - "--docker.watch"
+#      - "--logLevel=DEBUG"
+#      - "--traefikLog.filePath=/dev/sterr"
+#      - "--accessLog.filePath=/dev/stdout"
+#      - "--accessLog.filters.statusCodes=200,300-302,400-460,500"
+#      - "--accessLog.filters.retryAttempts=true"
+#      - "--accessLog.fields.defaultMode=keep"
+#      - "--accessLog.fields.names=Username=drop"
+#      - "--accessLog.fields.headers.defaultMode=keep"
+#      - "--accessLog.fields.headers.names=User-Agent=redact Authorization=drop Content-Type=keep"
+#      - "--traefikLog.format=json"
+#      - "--accessLog.format=json"
+    networks:
+      - proxy 
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /srv/docker/traefik/:/etc/traefik/acme/
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,10 @@
+- hosts: debianish
+  tasks:
+    - name: Do ping right here, right now
+      ping:
+        data: pong
+    - name: Update packages cache for debian like machines
+      apt:
+        update_cache: yes
+
+      

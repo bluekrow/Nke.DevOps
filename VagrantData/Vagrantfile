@@ -1,0 +1,44 @@
+$SSH = <<SCRIPT
+        mkdir -m 0700 /root/.ssh
+        cp /vagrant/id_ed25519.pub /root/.ssh/authorized_keys
+        cat /vagrant/id_ed25519.pub >> /home/vagrant/.ssh/authorized_keys
+        chmod 600 /root/.ssh/authorized_keys
+SCRIPT
+
+$InstallPythonAndSSH = <<SCRIPT
+        apt -y install python
+        cp /vagrant/id_ed25519.pub /root/.ssh/authorized_keys
+        cat /vagrant/id_ed25519.pub >> /home/vagrant/.ssh/authorized_keys
+        chmod 600 /root/.ssh/authorized_keys
+SCRIPT
+
+Vagrant.configure(2) do |config|
+  config.vm.define "centos01" do |config|
+    config.vm.box = "centos/7"
+    config.vm.hostname = "centos01"
+    config.vm.provision "shell", inline: $SSH
+    config.vm.network :forwarded_port, guest: 22, host: 64000
+  end
+
+  config.vm.define "debian01" do |config|
+    config.vm.box = "debian/jessie64"
+    config.vm.hostname = "debian01"
+    config.vm.provision "shell", inline: $SSH
+    config.vm.network :forwarded_port, guest: 22, host: 64001
+  end
+
+  config.vm.define "debian02" do |config|
+    config.vm.box = "debian/jessie64"
+    config.vm.hostname = "debian02"
+    config.vm.provision "shell", inline: $SSH
+    config.vm.network :forwarded_port, guest: 22, host: 64002
+  end
+
+  config.vm.define "ubuntu01" do |config|
+    config.vm.box = "ubuntu/xenial64"
+    config.vm.hostname = "ubuntu01"
+    config.vm.provision "shell", inline: $InstallPythonAndSSH
+    config.vm.network :forwarded_port, guest: 22, host: 64003
+  end
+
+end
