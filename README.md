@@ -2,4 +2,4 @@
 Linux Professional Institute Certification
 PUE Training
 
-All content of the training are available [here](https://github.com/bluekrow/nke.devops/wiki)
+All contents of the training are available [in the wiki](https://github.com/bluekrow/nke.devops/wiki)
