@@ -1,0 +1,84 @@
+#       Docker Stack to deploy ELK + Logspout
+#       Based on .......
+#       Updated by: Kenneth Peiruza, kenneth@floss.cat
+#       Sun Mar  4 13:15:47 CET 2018
+#
+#      cluster.name: 'docker-cluster'
+#      bootstrap.memory_lock: 'true'
+version: '3.4'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.2
+    environment:
+      ES_JAVA_OPTS: '-Xms768m -Xmx768m'
+      LOGSPOUT: 'ignore'
+    networks:
+      - elasticsearch
+    volumes:
+      - /srv/docker/elk/elasticsearch/data:/usr/share/elasticsearch/data
+    deploy:
+      replicas: 1
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash-oss:6.2.2
+    ports:
+      - 12345:12345
+    environment: 
+      LOGSPOUT: 'ignore'
+    volumes:
+      - /srv/docker/elk/logstash/config:/usr/share/logstash/pipeline/config
+    depends_on:
+      - elasticsearch
+    networks:
+      - elasticsearch
+      - logstash
+    deploy:
+      replicas: 1
+
+  logspout:
+    image: bekt/logspout-logstash
+    environment:
+      ROUTE_URIS: 'logstash://logstash:5000'
+      LOGSPOUT: 'ignore'
+      DOCKER_LABELS: 'yes'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - logstash
+    networks:
+      - logstash
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana-oss:6.2.2
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+    networks:
+      - elasticsearch
+      - proxy
+    environment:
+      ELASTICSEARCH_URL: 'http://elasticsearch:9200'
+      LOGSPOUT: 'ignore'
+    deploy:
+      replicas: 1
+      labels:
+        traefik.port: 5601
+        traefik.frontend.rule: "Host:traefik-elk"
+        traefik.docker.network: "proxy"
+
+networks:
+  default:
+    driver: 'overlay'
+  logstash:
+    driver: 'overlay'
+  elasticsearch:
+    driver: 'overlay'
+  proxy:
+    external: true
